@@ -1,0 +1,727 @@
+/* Organic — design-system tokens and component classes, ported verbatim
+   from the Claude Design handoff (design/handoff/project/_ds/.../styles.css)
+   so the app matches the approved mockups pixel-for-pixel. */
+@import url('https://fonts.googleapis.com/css2?family=Caprasimo:wght@400&family=Figtree:wght@400;600;700&display=swap');
+/* Fonts for the 3 alternate themes below (mono/luxe/bold) — loaded
+   unconditionally so switching themes never flashes unstyled text while a
+   font request is in flight. Apple Cinematic reuses Inter, already covered
+   by the Google Fonts request further down in this file. */
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=Archivo+Black&family=Archivo:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+:root {
+  --color-bg: #f5ead8;
+  --color-surface: #ebddc5;
+  --color-text: #201e1d;
+  --color-accent: #c67139;
+  --color-accent-2: #7a8a5e;
+  --color-divider: color-mix(in srgb, #201e1d 16%, transparent);
+  /* Text color for content sitting on top of --color-accent (buttons,
+     selected segmented-control options) — kept as its own token rather than
+     reusing --color-bg so a theme with a dark page background isn't forced
+     to also use dark text on its (possibly darker) accent buttons. Default
+     theme keeps the original behavior exactly (same value as --color-bg). */
+  --color-on-accent: #f5ead8;
+
+  --color-neutral-100: #f9f4ed;
+  --color-neutral-200: #eee7db;
+  --color-neutral-300: #dcd3c4;
+  --color-neutral-400: #c0b6a5;
+  --color-neutral-500: #a19786;
+  --color-neutral-600: #82796a;
+  --color-neutral-700: #645c50;
+  --color-neutral-800: #474238;
+  --color-neutral-900: #2e2b25;
+
+  --color-accent-100: #fff2eb;
+  --color-accent-200: #ffe1d0;
+  --color-accent-300: #ffc6a5;
+  --color-accent-400: #f6a06b;
+  --color-accent-500: #d67f48;
+  --color-accent-600: #b2622d;
+  --color-accent-700: #8c491a;
+  --color-accent-800: #643312;
+  --color-accent-900: #402310;
+
+  --color-accent-2-100: #f0fae1;
+  --color-accent-2-200: #e1eecc;
+  --color-accent-2-300: #ccdbb2;
+  --color-accent-2-400: #aebf92;
+  --color-accent-2-500: #8fa073;
+  --color-accent-2-600: #728157;
+  --color-accent-2-700: #56633f;
+  --color-accent-2-800: #3d472b;
+  --color-accent-2-900: #272e1b;
+
+  --font-heading: "Caprasimo", system-ui, sans-serif;
+  --font-heading-weight: 400;
+  --font-body: "Figtree", system-ui, sans-serif;
+
+  --space-1: 4.4px;
+  --space-2: 8.8px;
+  --space-3: 13.2px;
+  --space-4: 17.6px;
+  --space-6: 26.4px;
+  --space-8: 35.2px;
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 28px;
+
+  --shadow-sm: 0 1px 2px color-mix(in srgb, #2e2b25 14%, transparent);
+  --shadow-md: 0 3px 10px color-mix(in srgb, #2e2b25 16%, transparent);
+  --shadow-lg: 0 12px 32px color-mix(in srgb, #2e2b25 22%, transparent);
+}
+
+html {
+  /* The design system is built entirely on fixed px values (no rem), so
+     bumping the root font-size wouldn't scale anything. `zoom` reproduces
+     what browser-level zoom does — scales AND reflows the layout — without
+     having to touch every hardcoded size across the app. Desktop only —
+     applying a 133% zoom on top of an already-small phone screen would
+     fight against fitting content vertically instead of horizontally. */
+  zoom: 133%;
+}
+@media (max-width: 720px) {
+  html { zoom: 100%; }
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
+
+.washed{filter:saturate(0.6) contrast(0.85) brightness(1.1) opacity(0.94)}
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-size: 15px; line-height: 1.55; font-weight: 400; }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  line-height: 1.12; letter-spacing: -0.015em; margin: 0 0 var(--space-2);
+}
+h1 { font-size: 42px; }
+h2 { font-size: 32px; }
+h3 { font-size: 25px; }
+h4 { font-size: 20px; }
+h5 { font-size: 16px; }
+h6 { font-size: 13px; }
+h6 { letter-spacing: 0.08em; text-transform: uppercase; }
+p { margin: 0 0 var(--space-3); }
+a { color: var(--color-accent); text-underline-offset: 3px; }
+img { display: block; max-width: 100%; }
+figure { margin: 0; }
+figcaption {
+  font-size: 11px; margin-top: var(--space-1);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+.text-muted { color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+:focus { outline: none; }
+:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: color-mix(in srgb, var(--color-accent) 30%, transparent); }
+
+.hr {
+  height: 1px; border: 0; margin: var(--space-4) 0;
+  background: var(--color-divider);
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  cursor: pointer; text-decoration: none;
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 13px; line-height: 1.2; color: var(--color-text);
+  background: transparent; border: 1px solid transparent;
+  padding: calc(var(--space-2) * 0.85) var(--space-3);
+  border-radius: var(--radius-md);
+}
+.btn svg { display: block; }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-primary { background: var(--color-accent); color: var(--color-on-accent); }
+.btn-primary:hover { background: var(--color-accent-600); }
+.btn-primary:active { background: var(--color-accent-700); }
+.btn-secondary { border-color: var(--color-divider); }
+.btn-secondary:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.btn-secondary:active { background: color-mix(in srgb, var(--color-text) 14%, transparent); }
+.btn-ghost { color: var(--color-accent); padding-inline: var(--space-1); }
+.btn-ghost:hover { background: color-mix(in srgb, var(--color-accent) 10%, transparent); }
+.btn-ghost:active { background: color-mix(in srgb, var(--color-accent) 18%, transparent); }
+/* Circular, not the base .btn's 16px squircle radius — icon-only buttons
+   (favoritos, carrito, avatar, hamburger's siblings) read as squarish
+   otherwise, the same issue the Google sign-in button had. */
+.btn-icon { width: 34px; height: 34px; padding: 0; border-radius: 50%; }
+.btn-block { width: 100%; margin-top: var(--space-2); }
+
+.field > label {
+  display: block; font-size: 12px; margin-bottom: 5px;
+  color: color-mix(in srgb, var(--color-text) 70%, transparent);
+}
+.field-required { color: var(--color-accent-700); margin-left: 3px; }
+.field-optional { font-weight: 400; opacity: 0.55; font-size: 11px; margin-left: 5px; text-transform: none; letter-spacing: normal; }
+.form-section-title {
+  font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 600;
+  color: var(--color-accent-700); margin: var(--space-4) 0 var(--space-2);
+  padding-top: var(--space-3); border-top: 1px solid var(--color-divider);
+}
+.form-section-title:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+.input {
+  width: 100%; min-height: 36px; padding: 6px 10px; font: inherit;
+  font-size: 14px; color: var(--color-text); caret-color: var(--color-accent);
+  background: var(--color-surface);
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.input:hover { border-color: color-mix(in srgb, var(--color-text) 45%, transparent); }
+.input:focus-visible { border-color: var(--color-accent); outline-offset: 0; }
+textarea.input { min-height: 90px; resize: vertical; }
+.radio { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; }
+.radio input, .seg-opt input {
+  position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none;
+}
+.radio .dot {
+  width: 16px; height: 16px; flex: none; border-radius: 50%;
+  border: 1.5px solid var(--color-divider);
+}
+.radio:hover .dot { border-color: var(--color-accent); }
+.radio input:checked + .dot {
+  border-color: var(--color-accent); background: var(--color-accent);
+  box-shadow: inset 0 0 0 4px var(--color-bg);
+}
+.radio input:focus-visible + .dot { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+.seg {
+  display: inline-flex; overflow: hidden;
+  border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+}
+.seg-opt {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 12px; font-size: 13px; cursor: pointer;
+}
+.seg-opt + .seg-opt { border-left: 1px solid var(--color-divider); }
+.seg-opt:has(input:checked) { background: var(--color-accent); color: var(--color-on-accent); }
+.seg-opt:not(:has(input:checked)):hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.seg-opt:has(input:focus-visible) { outline: 2px solid var(--color-accent); outline-offset: -2px; }
+
+.card {
+  display: flex; flex-direction: column; gap: var(--space-2);
+  padding: var(--space-3); border-radius: var(--radius-md); background: var(--color-surface);
+}
+.card-kicker { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-accent); }
+.card-title {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 17px; line-height: 1.2;
+}
+.card-body { margin: 0; font-size: 13px; opacity: 0.8; flex: 1; }
+.card-meta {
+  display: flex; align-items: center; gap: 6px; font-size: 11px;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+}
+.elev-sm { box-shadow: var(--shadow-sm); }
+.elev-md { box-shadow: var(--shadow-md); }
+.elev-lg { box-shadow: var(--shadow-lg); }
+
+.tag {
+  display: inline-flex; align-items: center; font-size: 11px;
+  letter-spacing: 0.02em; padding: 3px 10px;
+  border-radius: calc(var(--radius-md) * 0.75);
+}
+.tag-accent { background: var(--color-accent-100); color: var(--color-accent-800); }
+.tag-accent-2 { background: var(--color-accent-2-100); color: var(--color-accent-2-800); }
+.tag-neutral { background: var(--color-neutral-100); color: var(--color-neutral-800); }
+.tag-outline { border: 1px solid var(--color-accent); color: var(--color-accent); }
+
+.nav {
+  display: flex; flex-direction: column;
+  border-bottom: none;
+}
+/* The actual icon/logo row — split out from .nav so it can stay
+   flex-wrap:nowrap no matter what (favoritos/carrito/Ingresar must never
+   drop to a second line, even though "Ingresar" is wider than the
+   logged-in avatar button). The mobile nav-links dropdown lives in its own
+   sibling block below instead of wrapping inside this row. */
+.nav-row {
+  display: flex; align-items: center; gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  flex-wrap: nowrap;
+}
+.nav-brand {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 18px; margin-right: auto;
+  min-width: 0; flex-shrink: 1;
+}
+.nav-brand-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.nav-actions { gap: var(--space-4); }
+.nav a { color: inherit; text-decoration: none; font-size: 14px; }
+.nav a:hover, .nav a[aria-current='page'] { color: var(--color-accent); }
+.nav .mobile-only a { padding: 10px 4px; font-size: 15px; }
+
+/* On mobile there's little room next to the hamburger button for a long
+   store name AND favoritos+carrito+perfil to stay on the same row. The name
+   should only ever truncate as much as it actually needs to (flex-shrink +
+   ellipsis, no fixed max-width — a hard cap left a dead gap whenever the
+   real name was shorter than the cap). margin-right:auto is desktop-only
+   (it separates the brand from the nav links there); on mobile those links
+   are hidden, so it would otherwise shove the icon group away from the
+   name for no reason — the lone flex:1 spacer already does that job. */
+@media (max-width: 720px) {
+  .nav-row { gap: 10px; }
+  .nav-brand { margin-right: 0; }
+  .nav-actions { gap: 8px; }
+}
+
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th {
+  text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: color-mix(in srgb, var(--color-text) 60%, transparent);
+  padding: var(--space-2); border-bottom: 1px solid var(--color-divider);
+}
+.table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid color-mix(in srgb, var(--color-text) 8%, transparent);
+}
+.table tbody tr:hover { background: color-mix(in srgb, var(--color-text) 4%, transparent); }
+
+.dialog-backdrop {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  padding: var(--space-4); z-index: 400;
+  background: color-mix(in srgb, var(--color-neutral-900) 50%, transparent);
+}
+.dialog {
+  width: min(440px, 100%); display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4); border-radius: var(--radius-lg);
+  background: var(--color-surface); box-shadow: var(--shadow-lg);
+  /* Compensated for the desktop-only 133% zoom (see html { zoom } above) —
+     vw is computed against the real, unzoomed viewport, then the zoom
+     magnifies the rendered result again, so this is divided by ~1.33 to
+     land at the intended 92vw on screen. */
+  max-width: 69vw;
+}
+.dialog-title {
+  font-family: var(--font-heading); font-weight: var(--font-heading-weight);
+  font-size: 20px;
+}
+.dialog-body { font-size: 14px; opacity: 0.85; max-height: 48vh; overflow: auto; }
+
+@media (max-width: 720px) {
+  /* zoom is reset to 100% on mobile, so no 1.33 compensation needed here —
+     just fit the actual small screen with a little breathing room. */
+  .dialog { width: 100% !important; max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); }
+  .dialog-body { max-height: calc(100vh - 180px); }
+}
+.dialog-actions { display: flex; justify-content: flex-end; gap: var(--space-2); margin-top: var(--space-2); }
+
+.card, .dialog { border-radius: calc(var(--radius-lg) * 1.15); }
+.btn, .tag, .seg, .input { border-radius: 999px; }
+.input { padding-inline: 14px; }
+
+@keyframes toastIn { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+::-webkit-scrollbar { width:10px; height:10px; }
+::-webkit-scrollbar-thumb { background: var(--color-neutral-300); border-radius:99px; }
+
+/* ───────────────────────── Responsive (mobile) ─────────────────────────
+   One breakpoint (720px) for the whole app. Desktop layout above this is
+   untouched — these rules only kick in below it. Grid layouts that need to
+   collapse on mobile use the .grid-2 / .grid-3 utility classes below instead
+   of inline gridTemplateColumns, since inline styles can't be overridden by
+   a media query. */
+
+/* !important — one of the two hamburger buttons also carries an inline
+   `display: flex`, which would otherwise beat this at any width. */
+.hamburger-btn { display: none !important; }
+
+@media (max-width: 720px) {
+  .hamburger-btn {
+    display: flex !important; align-items: center; justify-content: center;
+    width: 36px; height: 36px; border: none; background: transparent; cursor: pointer; color: inherit;
+  }
+  .desktop-only { display: none !important; }
+}
+/* !important on both branches — some .mobile-only elements also carry an
+   inline `display` (flex, for layout), which would otherwise always beat a
+   plain (non-important) stylesheet rule and stay visible on desktop too. */
+.mobile-only { display: none !important; }
+@media (max-width: 720px) {
+  .mobile-only { display: block !important; }
+  .mobile-only.mobile-flex { display: flex !important; }
+}
+
+/* Utility grids: 2/3 equal columns on desktop, 1 column on mobile. Use for
+   any layout split that should stack on small screens (dialogs, checkout
+   summary, product detail, account sidebar, etc.) instead of inline
+   gridTemplateColumns. */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: var(--space-3); }
+.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-4); }
+/* Producto dialog's Código/Nombre/Marca row — keeps its own desktop ratio. */
+.grid-codigo-row { display: grid; grid-template-columns: 0.8fr 1.2fr 1fr; gap: var(--space-3); }
+@media (max-width: 720px) {
+  .grid-2, .grid-3, .grid-codigo-row { grid-template-columns: 1fr; }
+  .grid-4 { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .grid-4 { grid-template-columns: 1fr; }
+}
+
+/* Main content + narrower side panel (checkout summary, order tracking
+   summary, hero banner) — stacks with the side panel below on mobile. */
+.grid-main-side { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-6); align-items: start; }
+/* Grid items default to min-width:auto, so an unbreakable child (e.g. a
+   long address/URL pasted into the "Visitanos" card) forces its track —
+   and the whole grid — wider than the viewport instead of wrapping. */
+.grid-main-side > * { min-width: 0; }
+@media (max-width: 720px) {
+  .grid-main-side { grid-template-columns: 1fr; }
+}
+
+/* Card grids (categorías, admin cards, etc.) — 1 column on mobile. */
+.grid-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+@media (max-width: 720px) {
+  .grid-cards { grid-template-columns: 1fr; }
+}
+
+/* Storefront product grids — 2 columns down to phone width, 1 below that
+   (product cards read fine at 2-up, unlike denser admin data). */
+.grid-products { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-4); }
+@media (max-width: 720px) {
+  .grid-products { grid-template-columns: repeat(2, 1fr); gap: var(--space-3); }
+}
+@media (max-width: 480px) {
+  .grid-products { grid-template-columns: 1fr; }
+}
+
+/* Sidebar + content layouts (catálogo filters, cuenta tabs) — stack on
+   mobile instead of a fixed-width side column squeezing the content. */
+.layout-sidebar { display: flex; gap: var(--space-6); align-items: flex-start; }
+.layout-sidebar > :first-child { width: 240px; flex: none; }
+@media (max-width: 720px) {
+  .layout-sidebar { flex-direction: column; }
+  /* align-items:flex-start (needed on desktop so the fixed-width side
+     column doesn't stretch) otherwise leaves every stacked child sized to
+     its own content instead of the full column — which silently shrank
+     the product grid (and its cards) to a fraction of the real width.
+     `:first-child` is repeated (not just `*`) because the desktop rule
+     above sets its width with equal specificity — a plain `*` alone loses
+     that tie and the fixed 240px sticks even on mobile. */
+  .layout-sidebar > *,
+  .layout-sidebar > :first-child {
+    width: 100%;
+  }
+}
+
+/* Home page's "Categorías destacadas" hero: a fixed-height 1.4fr/1fr split
+   on desktop, a stack of auto-height tiles on mobile. */
+/* min-height (not height) — the right column stacks one tile per featured
+   category beyond the first, so with 4+ categories it can outgrow 340px;
+   a fixed height let that overflow spill onto "Productos destacados"
+   below instead of pushing it down. The big tile still stretches to match
+   (grid items default to align-items:stretch) whichever column is taller. */
+.category-hero { display: grid; grid-template-columns: 1.4fr 1fr; gap: var(--space-4); min-height: 340px; }
+@media (max-width: 720px) {
+  .category-hero { grid-template-columns: 1fr; height: auto; }
+  .category-hero > * { min-height: 160px; }
+}
+
+/* Carrito's items + summary split — its own slightly wider desktop ratio. */
+.grid-cart { display: grid; grid-template-columns: 1.6fr 1fr; gap: var(--space-6); align-items: start; }
+@media (max-width: 720px) {
+  .grid-cart { grid-template-columns: 1fr; }
+}
+
+/* Auth page's two-panel card (decorative side + form) — stacks with a
+   short banner on top instead of squeezing both panels side by side. */
+@media (max-width: 720px) {
+  .auth-card { flex-direction: column !important; min-height: 0 !important; }
+  .auth-card > :first-child { flex: none !important; min-height: 140px; }
+  .auth-card > :last-child { flex: none !important; }
+}
+
+/* Responsive admin tables: stack each row into a labeled card below 720px
+   instead of scrolling a wide table horizontally. Requires a data-label on
+   every <td> (used as the row's field caption on mobile) — the desktop
+   <table>/<th> rendering is completely unaffected. */
+@media (max-width: 720px) {
+  .table-responsive thead { display: none; }
+  .table-responsive, .table-responsive tbody, .table-responsive tr, .table-responsive td { display: block; width: 100%; }
+  .table-responsive tr {
+    border: 1px solid var(--color-divider); border-radius: var(--radius-md);
+    padding: var(--space-3); margin-bottom: var(--space-3);
+  }
+  .table-responsive td {
+    display: flex; justify-content: space-between; align-items: center; gap: var(--space-3);
+    padding: 6px 0; border-bottom: none; text-align: right;
+  }
+  .table-responsive td[data-label]::before {
+    content: attr(data-label); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase;
+    opacity: 0.55; text-align: left; flex: none;
+  }
+  .table-responsive td:empty, .table-responsive td[data-label='']::before { display: none; }
+  /* For cells too complex for a side-by-side label (e.g. an avatar + name +
+     meta block) — stack the caption above the content instead. */
+  .table-responsive td.td-stack { flex-direction: column; align-items: flex-start; text-align: left; }
+  .table-responsive td.td-stack::before { margin-bottom: 4px; }
+  .table-responsive td.td-actions { justify-content: flex-end; padding-top: var(--space-2); margin-top: 4px; border-top: 1px solid var(--color-divider); }
+}
+
+/* Admin sidebar: fixed 260px column on desktop (untouched); an off-canvas
+   drawer triggered by the topbar hamburger on mobile, closed by default. */
+@media (max-width: 720px) {
+  .admin-sidebar {
+    position: fixed !important; top: 0; left: 0; z-index: 200;
+    width: 260px !important; max-width: 82vw; height: 100vh !important;
+    transform: translateX(-100%); transition: transform .18s ease;
+  }
+  .admin-sidebar.is-open { transform: translateX(0); box-shadow: var(--shadow-lg); }
+  /* The topbar was a flex item squeezed alongside <main> in the outer
+     display:flex row (only the now-fixed .admin-sidebar was taken out of
+     that flow) — pull it out too and pin it across the full width, then
+     push .admin-main down by its height so content doesn't start underneath it. */
+  .admin-topbar {
+    position: fixed !important; top: 0; left: 0; right: 0; width: 100% !important;
+    z-index: 160; box-sizing: border-box;
+  }
+  .admin-main { padding: 66px var(--space-3) var(--space-6) !important; }
+}
+
+/* Page header (title + action button/group) — nearly every admin/store list
+   page has this shape. Actions can't just flex-wrap next to the title on
+   mobile (differently-sized buttons end up side by side, cramped and
+   uneven) — they need to drop below it and, if there's more than one,
+   stack vertically. Properties here must NOT also be set as inline styles
+   on the same element, since inline styles beat this media query outright
+   regardless of specificity. */
+.page-header { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); flex-wrap: wrap; }
+.page-header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .page-header { flex-direction: column; align-items: stretch; }
+  .page-header-actions { flex-direction: column; align-items: stretch; }
+  .page-header-actions > * { width: 100%; }
+}
+
+/* Dual-handle price slider (catálogo) — two overlapping range inputs sharing
+   one track. Each input's own track is transparent and non-interactive
+   (pointer-events: none) so only its thumb is clickable — otherwise the
+   invisible track of whichever input sits on top would swallow every click,
+   making the other handle undraggable. */
+.range-slider { position: relative; height: 20px; }
+.range-slider .range-track {
+  position: absolute; top: 8px; left: 0; right: 0; height: 4px;
+  border-radius: 999px; background: var(--color-divider);
+}
+.range-slider .range-fill {
+  position: absolute; top: 8px; height: 4px; border-radius: 999px;
+  background: var(--color-accent);
+}
+.range-slider input[type='range'] {
+  position: absolute; top: 0; left: 0; width: 100%; margin: 0;
+  background: transparent; pointer-events: none;
+  -webkit-appearance: none; appearance: none;
+}
+.range-slider input[type='range']::-webkit-slider-runnable-track { background: transparent; height: 20px; }
+.range-slider input[type='range']::-moz-range-track { background: transparent; height: 20px; }
+.range-slider input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none; pointer-events: auto;
+  width: 16px; height: 16px; margin-top: 2px; border-radius: 50%;
+  background: var(--color-accent); border: 2px solid var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-accent); cursor: pointer;
+}
+.range-slider input[type='range']::-moz-range-thumb {
+  pointer-events: auto; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--color-accent); border: 2px solid var(--color-bg);
+  box-shadow: 0 0 0 1px var(--color-accent); cursor: pointer;
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Alternate store themes — selected in /admin/config → Diseño, applied
+   via [data-theme] on <html> (see app/layout.tsx). Each block redefines
+   every token the default "Organic" theme (:root, above) sets, so no
+   component needs to know which theme is active — only colors/type/
+   radius/shadow change, never layout or HTML structure. Fonts for all of
+   them are imported unconditionally at the top of this file so switching
+   themes never flashes unstyled text.
+   ════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────── Mono Editorial ───────────────────────── */
+[data-theme='mono'] {
+  --color-bg: #ffffff;
+  --color-surface: #f4f4f5;
+  --color-text: #0a0a0a;
+  --color-accent: #111111;
+  --color-accent-2: #52606d;
+  --color-divider: color-mix(in srgb, #0a0a0a 14%, transparent);
+  --color-on-accent: #ffffff;
+
+  --color-neutral-100: #fafafa; --color-neutral-200: #f0f0f0; --color-neutral-300: #dcdcdc;
+  --color-neutral-400: #b5b5b5; --color-neutral-500: #8e8e8e; --color-neutral-600: #6b6b6b;
+  --color-neutral-700: #4a4a4a; --color-neutral-800: #2b2b2b; --color-neutral-900: #131313;
+
+  --color-accent-100: #f2f2f2; --color-accent-200: #dcdcdc; --color-accent-300: #b0b0b0;
+  --color-accent-400: #7a7a7a; --color-accent-500: #4a4a4a; --color-accent-600: #2b2b2b;
+  --color-accent-700: #181818; --color-accent-800: #0e0e0e; --color-accent-900: #060606;
+
+  --color-accent-2-100: #eef2f5; --color-accent-2-200: #d7e0e6; --color-accent-2-300: #b3c2cc;
+  --color-accent-2-400: #8398a6; --color-accent-2-500: #5c7282; --color-accent-2-600: #445661;
+  --color-accent-2-700: #313e46; --color-accent-2-800: #212a30; --color-accent-2-900: #14191d;
+
+  --font-heading: 'Space Grotesk', system-ui, sans-serif;
+  --font-heading-weight: 600;
+  --font-body: 'Space Grotesk', system-ui, sans-serif;
+
+  --radius-sm: 2px; --radius-md: 4px; --radius-lg: 6px;
+  --shadow-sm: 0 0 0 1px color-mix(in srgb, #0a0a0a 10%, transparent);
+  --shadow-md: 0 0 0 1px color-mix(in srgb, #0a0a0a 16%, transparent);
+  --shadow-lg: 0 0 0 1px color-mix(in srgb, #0a0a0a 24%, transparent);
+}
+[data-theme='mono'] h1, [data-theme='mono'] h2, [data-theme='mono'] h3,
+[data-theme='mono'] h4, [data-theme='mono'] h5, [data-theme='mono'] h6 { letter-spacing: -0.02em; }
+[data-theme='mono'] .washed { filter: none; }
+[data-theme='mono'] .btn, [data-theme='mono'] .tag, [data-theme='mono'] .seg, [data-theme='mono'] .input { border-radius: var(--radius-sm); }
+[data-theme='mono'] .card, [data-theme='mono'] .dialog { border-radius: var(--radius-md); }
+
+/* ───────────────────────── Boutique Luxe ───────────────────────── */
+[data-theme='luxe'] {
+  --color-bg: #141110;
+  --color-surface: #1f1a16;
+  --color-text: #f3ead9;
+  --color-accent: #2f6b4f;
+  --color-accent-2: #c9a24b;
+  --color-divider: color-mix(in srgb, #f3ead9 18%, transparent);
+  --color-on-accent: #f8f4ea;
+
+  --color-neutral-100: #f3ead9; --color-neutral-200: #e3d6bd; --color-neutral-300: #c9b792;
+  --color-neutral-400: #a8936b; --color-neutral-500: #85704f; --color-neutral-600: #635337;
+  --color-neutral-700: #453a27; --color-neutral-800: #2b241a; --color-neutral-900: #1a1611;
+
+  --color-accent-100: #e4efe8; --color-accent-200: #bdd9c8; --color-accent-300: #8fbda3;
+  --color-accent-400: #5f9d7c; --color-accent-500: #2f6b4f; --color-accent-600: #22513b;
+  --color-accent-700: #173a29; --color-accent-800: #0e2419; --color-accent-900: #08150e;
+
+  --color-accent-2-100: #faf3df; --color-accent-2-200: #f0e0ae; --color-accent-2-300: #e2c879;
+  --color-accent-2-400: #d4b15a; --color-accent-2-500: #c9a24b; --color-accent-2-600: #a3813a;
+  --color-accent-2-700: #78602b; --color-accent-2-800: #4c3d1c; --color-accent-2-900: #2b2310;
+
+  --font-heading: 'Cormorant Garamond', Georgia, serif;
+  --font-heading-weight: 600;
+  --font-body: 'Inter', system-ui, sans-serif;
+
+  --radius-sm: 2px; --radius-md: 6px; --radius-lg: 10px;
+  --shadow-sm: 0 2px 8px color-mix(in srgb, #000000 35%, transparent);
+  --shadow-md: 0 8px 24px color-mix(in srgb, #000000 45%, transparent);
+  --shadow-lg: 0 24px 56px color-mix(in srgb, #000000 55%, transparent);
+}
+[data-theme='luxe'] h1, [data-theme='luxe'] h2, [data-theme='luxe'] h3,
+[data-theme='luxe'] h4, [data-theme='luxe'] h5, [data-theme='luxe'] h6 { letter-spacing: 0; }
+[data-theme='luxe'] .washed { filter: saturate(0.92) contrast(1.05); }
+[data-theme='luxe'] .btn, [data-theme='luxe'] .tag, [data-theme='luxe'] .seg, [data-theme='luxe'] .input { border-radius: var(--radius-sm); }
+[data-theme='luxe'] .card, [data-theme='luxe'] .dialog { border-radius: var(--radius-lg); }
+[data-theme='luxe'] .card { border: 1px solid color-mix(in srgb, var(--color-accent-2) 35%, transparent); }
+[data-theme='luxe'] .btn-secondary { border-color: color-mix(in srgb, var(--color-accent-2) 45%, transparent); }
+
+/* ───────────────────────── Street Bold ───────────────────────── */
+[data-theme='bold'] {
+  --color-bg: #f7f7f2;
+  --color-surface: #ffffff;
+  --color-text: #0a0a0a;
+  --color-accent: #ff2d78;
+  --color-accent-2: #7a8f00;
+  --color-divider: color-mix(in srgb, #0a0a0a 70%, transparent);
+  --color-on-accent: #ffffff;
+
+  --color-neutral-100: #ffffff; --color-neutral-200: #ededed; --color-neutral-300: #d4d4d4;
+  --color-neutral-400: #aeaeae; --color-neutral-500: #858585; --color-neutral-600: #5e5e5e;
+  --color-neutral-700: #3d3d3d; --color-neutral-800: #202020; --color-neutral-900: #0a0a0a;
+
+  --color-accent-100: #ffe4ef; --color-accent-200: #ffb8d4; --color-accent-300: #ff84b4;
+  --color-accent-400: #ff5897; --color-accent-500: #ff2d78; --color-accent-600: #d41a5e;
+  --color-accent-700: #a30f49; --color-accent-800: #730a34; --color-accent-900: #470520;
+
+  --color-accent-2-100: #f3ffb0; --color-accent-2-200: #e3f576; --color-accent-2-300: #caff00;
+  --color-accent-2-400: #a8d900; --color-accent-2-500: #7a8f00; --color-accent-2-600: #5f6f00;
+  --color-accent-2-700: #475300; --color-accent-2-800: #2e3600; --color-accent-2-900: #1a1e00;
+
+  --font-heading: 'Archivo Black', 'Archivo', system-ui, sans-serif;
+  --font-heading-weight: 400;
+  --font-body: 'Archivo', system-ui, sans-serif;
+
+  --radius-sm: 0px; --radius-md: 0px; --radius-lg: 4px;
+  --shadow-sm: 3px 3px 0 var(--color-text);
+  --shadow-md: 5px 5px 0 var(--color-text);
+  --shadow-lg: 8px 8px 0 var(--color-text);
+}
+[data-theme='bold'] .washed { filter: none; }
+[data-theme='bold'] .btn, [data-theme='bold'] .tag, [data-theme='bold'] .seg, [data-theme='bold'] .input { border-radius: var(--radius-sm); }
+[data-theme='bold'] .card, [data-theme='bold'] .dialog { border-radius: var(--radius-lg); }
+[data-theme='bold'] .card { border: 2px solid var(--color-text); }
+[data-theme='bold'] .btn-primary, [data-theme='bold'] .btn-secondary { border: 2px solid var(--color-text); }
+[data-theme='bold'] .btn-primary:hover { background: var(--color-accent-600); }
+
+/* ───────────────────────── Apple Cinematic ───────────────────────── */
+[data-theme='apple'] {
+  --color-bg: #ffffff;
+  --color-surface: #f5f5f7;
+  --color-text: #1d1d1f;
+  --color-accent: #0071e3;
+  --color-accent-2: #86868b;
+  --color-divider: color-mix(in srgb, #1d1d1f 10%, transparent);
+  --color-on-accent: #ffffff;
+
+  --color-neutral-100: #fbfbfd; --color-neutral-200: #f5f5f7; --color-neutral-300: #e8e8ed;
+  --color-neutral-400: #d2d2d7; --color-neutral-500: #aeaeb2; --color-neutral-600: #86868b;
+  --color-neutral-700: #6e6e73; --color-neutral-800: #424245; --color-neutral-900: #1d1d1f;
+
+  /* Apple's actual palette is almost entirely black/white/gray — blue shows
+     up only on buttons and links, never as a pastel tint on badges or
+     section backgrounds. So unlike the other 3 themes, this ramp does NOT
+     scale the accent hue down to a light tint at 100-300 — it fades to
+     neutral gray instead, and only turns into real blue from 500 (the
+     actual button/link color) on down. Keeps every component that uses a
+     light accent shade (tag-accent, category tiles, the homepage hero's
+     no-image gradient) reading as stark monochrome instead of "pastel SaaS". */
+  --color-accent-100: #f5f5f7; --color-accent-200: #e8e8ed; --color-accent-300: #d2d2d7;
+  --color-accent-400: #86868b; --color-accent-500: #0071e3; --color-accent-600: #0058b0;
+  --color-accent-700: #00418a; --color-accent-800: #002d61; --color-accent-900: #001b3a;
+
+  --color-accent-2-100: #f5f5f7; --color-accent-2-200: #e8e8ed; --color-accent-2-300: #d2d2d7;
+  --color-accent-2-400: #aeaeb2; --color-accent-2-500: #86868b; --color-accent-2-600: #6e6e73;
+  --color-accent-2-700: #515154; --color-accent-2-800: #363638; --color-accent-2-900: #1d1d1f;
+
+  --font-heading: 'Inter', -apple-system, system-ui, sans-serif;
+  --font-heading-weight: 700;
+  --font-body: 'Inter', -apple-system, system-ui, sans-serif;
+  /* The home hero/section headings set their own inline font-size (bigger
+     than the generic h1/h2 scale below), so they need their own token to
+     be themeable at all — see app/(store)/HomeClient.tsx. */
+  --hero-h1-size: 72px;
+  --hero-h2-size: 34px;
+
+  --radius-sm: 8px; --radius-md: 14px; --radius-lg: 20px;
+  --shadow-sm: 0 1px 3px color-mix(in srgb, #000000 6%, transparent);
+  --shadow-md: 0 6px 20px color-mix(in srgb, #000000 8%, transparent);
+  --shadow-lg: 0 16px 48px color-mix(in srgb, #000000 12%, transparent);
+}
+[data-theme='apple'] h1, [data-theme='apple'] h2, [data-theme='apple'] h3,
+[data-theme='apple'] h4, [data-theme='apple'] h5, [data-theme='apple'] h6 { letter-spacing: -0.03em; }
+/* Apple's actual type scale is much bigger and bolder than the other 3
+   themes' — the headline carries the whole page, there's no decorative
+   texture to lean on instead. */
+[data-theme='apple'] h1 { font-size: 64px; line-height: 1.04; }
+[data-theme='apple'] h2 { font-size: 40px; }
+[data-theme='apple'] .washed { filter: none; }
+
+/* Scroll-reveal — exclusive to Apple Cinematic (see components/Reveal.tsx),
+   a plain fade+rise driven by the .is-visible class an IntersectionObserver
+   toggles. Inert (always visible, no motion) under every other theme so the
+   wrapper never has to know which theme is active. */
+.reveal-on-scroll {
+  opacity: 1;
+  transform: none;
+}
+[data-theme='apple'] .reveal-on-scroll {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1), transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+[data-theme='apple'] .reveal-on-scroll.is-visible {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='apple'] .reveal-on-scroll { opacity: 1 !important; transform: none !important; transition: none !important; }
+}

@@ -1,0 +1,530 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────────────────── Auth ─────────────────────────
+
+enum AdminRole {
+  SUPER_ADMIN
+  ADMIN
+  EDITOR_CATALOGO
+  SOPORTE
+}
+
+model AdminUser {
+  id                 String    @id @default(cuid())
+  nombre             String
+  email              String    @unique
+  passwordHash       String?
+  rol                AdminRole @default(SOPORTE)
+  activo             Boolean   @default(true)
+  inviteToken        String?   @unique
+  invitedAt          DateTime?
+  // Opt-in/out of the weekly stock/sales report email — configurable from
+  // Configuración, defaults to true so existing admins keep getting it.
+  recibeReporteStock Boolean   @default(true)
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  refreshTokens AdminRefreshToken[]
+  restocks      Restock[]
+
+  @@map("admin_users")
+}
+
+model AdminRefreshToken {
+  id          String    @id @default(cuid())
+  adminUserId String
+  adminUser   AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  revokedAt   DateTime?
+
+  @@map("admin_refresh_tokens")
+}
+
+model Customer {
+  id           String    @id @default(cuid())
+  nombre       String
+  email        String    @unique
+  passwordHash String?
+  googleId     String?   @unique
+  avatarUrl    String?
+  // Set by POST /forgot-password, cleared once used or once a new one is
+  // issued — only the hash is stored, mirroring the refresh-token pattern,
+  // so a DB leak alone can't be used to take over an account.
+  passwordResetTokenHash String?   @unique
+  passwordResetExpiresAt DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  orders        Order[]
+  refreshTokens CustomerRefreshToken[]
+  addresses     CustomerAddress[]
+  favorites     CustomerFavorite[]
+  cartItems     CartItem[]
+
+  @@map("customers")
+}
+
+// Favoritos y carrito viven en el servidor, ligados a la cuenta — no en
+// localStorage — para que persistan de verdad entre sesiones/dispositivos
+// y para que agregar algo exija estar logeado (sin cliente, no hay dónde
+// guardarlo).
+model CustomerFavorite {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([customerId, productId])
+  @@map("customer_favorites")
+}
+
+model CartItem {
+  id            String    @id @default(cuid())
+  customerId    String
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  varianteLabel String    @default("")
+  tipoVenta     VentaModo @default(UNIDAD)
+  cantidad      Int       @default(1)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@unique([customerId, productId, varianteLabel, tipoVenta])
+  @@map("cart_items")
+}
+
+model CustomerAddress {
+  id               String   @id @default(cuid())
+  customerId       String
+  customer         Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  nombre           String
+  ci               String
+  celular          String
+  ciudad           String
+  barrio           String
+  esPredeterminada Boolean  @default(false)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("customer_addresses")
+}
+
+model CustomerRefreshToken {
+  id         String    @id @default(cuid())
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tokenHash  String    @unique
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  revokedAt  DateTime?
+
+  @@map("customer_refresh_tokens")
+}
+
+// ───────────────────────── Catalog ─────────────────────────
+
+model Category {
+  id            String         @id @default(cuid())
+  nombre        String
+  createdAt     DateTime       @default(now())
+  subcategorias Subcategory[]
+  products      Product[]
+
+  @@map("categories")
+}
+
+model Subcategory {
+  id         String   @id @default(cuid())
+  nombre     String
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  products   Product[]
+
+  @@unique([categoryId, nombre])
+  @@map("subcategories")
+}
+
+model Supplier {
+  id        String    @id @default(cuid())
+  nombre    String
+  contacto  String?
+  telefono  String?
+  createdAt DateTime  @default(now())
+  products  Product[]
+
+  @@map("suppliers")
+}
+
+model Product {
+  id                   String   @id @default(cuid())
+  codigo               String   @unique
+  nombre               String
+  marca                String   @default("")
+  descripcion          String   @default("")
+  // "Por unidad" price — always applies to plain-unit products, and still
+  // tracked (for costing/margin) even on pack-only products that never sell
+  // it directly.
+  precio               Int
+  precioCosto          Int      @default(0)
+  // "Por paquete" price — only meaningful when ventaConjuntoActivo.
+  precioPaquete        Int      @default(0)
+  precioCostoPaquete   Int      @default(0)
+  // When ventaConjuntoActivo, `stock` counts whole packs and `unidadesSueltas`
+  // counts loose units left over from a broken pack (0..ventaConjuntoUnidades-1
+  // in the normal case) — a unit-quantity sale drains unidadesSueltas first
+  // and only breaks a new pack (stock -1, unidadesSueltas += ventaConjuntoUnidades)
+  // once that runs out. When it's off, `stock` is just plain units and
+  // unidadesSueltas is unused. See backend/src/lib/stock.ts.
+  stock                Int      @default(0)
+  unidadesSueltas      Int      @default(0)
+  // Alert threshold for the weekly low-stock email report.
+  stockMinimo          Int      @default(0)
+  icon                 String   @default("camisa")
+  requiereVerificacion Boolean  @default(false)
+  destacado            Boolean  @default(false)
+  ventaConjuntoActivo  Boolean  @default(false)
+  // Only meaningful when ventaConjuntoActivo — false means "solo por
+  // paquete" (no loose-unit sales at all, no unidadesSueltas tracked, and
+  // the storefront never offers a per-unit purchase option).
+  ventaUnidadActiva    Boolean  @default(true)
+  ventaConjuntoUnidades Int     @default(1)
+  categoryId           String
+  category             Category @relation(fields: [categoryId], references: [id])
+  subcategoryId        String?
+  subcategory          Subcategory? @relation(fields: [subcategoryId], references: [id])
+  supplierId           String?
+  supplier             Supplier? @relation(fields: [supplierId], references: [id])
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  variantes   ProductVariant[]
+  imagenes    ProductImage[]
+  orderItems  OrderItem[]
+  coupons     CouponProduct[]
+  restocks    Restock[]
+  favoritedBy CustomerFavorite[]
+  cartItems   CartItem[]
+
+  @@index([nombre])
+  @@index([stock])
+  @@index([createdAt])
+  @@index([requiereVerificacion])
+  @@map("products")
+}
+
+enum RestockTipo {
+  UNIDADES
+  PAQUETES
+}
+
+// Historical record of stock replenishment — created only for existing
+// products (see admin Productos → "Reposición"), keeping a dated trail of
+// how much was added and whether it was entered as loose units or packs.
+model Restock {
+  id                String      @id @default(cuid())
+  productId         String
+  product           Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tipo              RestockTipo
+  cantidad          Int
+  unidadesAgregadas Int
+  // Optional price correction applied at the same time as this restock —
+  // refers to precio/precioCosto when tipo=UNIDADES, or
+  // precioPaquete/precioCostoPaquete when tipo=PAQUETES. Null means the
+  // price wasn't touched during this particular restock.
+  precioCosto       Int?
+  precioVenta       Int?
+  adminUserId       String?
+  adminUser         AdminUser?  @relation(fields: [adminUserId], references: [id])
+  createdAt         DateTime    @default(now())
+
+  @@index([productId])
+  @@index([createdAt])
+  @@map("restocks")
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String
+  orden     Int     @default(0)
+
+  @@map("product_images")
+}
+
+model ProductVariant {
+  id        String   @id @default(cuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  tipo      String
+  valores   String[]
+
+  @@map("product_variants")
+}
+
+// ───────────────────────── Orders ─────────────────────────
+
+enum OrderStatus {
+  VERIFICANDO_EXISTENCIA
+  PENDIENTE
+  PROCESANDO
+  PAGO_CONFIRMADO
+  ENVIADO
+  ENTREGADO
+  CANCELADO
+  REEMBOLSADO
+}
+
+enum PaymentMethod {
+  TARJETA
+  TRANSFERENCIA
+}
+
+enum TipoEntrega {
+  RETIRO_LOCAL
+  ENVIO_DOMICILIO
+}
+
+model Order {
+  id                 String         @id @default(cuid())
+  numero             String         @unique
+  customerId         String?
+  customer           Customer?      @relation(fields: [customerId], references: [id])
+  estado             OrderStatus    @default(PENDIENTE)
+  metodoPago         PaymentMethod?
+  comprobanteUrl     String?
+  total              Int
+  couponCode         String?
+  // Stock is decremented once, only when the order first reaches a
+  // payment-confirmed state (Stripe webhook or admin transfer confirmation)
+  // — not at order creation — and restocked if it's later cancelled/refunded.
+  stockDecremented   Boolean        @default(false)
+  stripePaymentIntentId String?
+  stripeCheckoutSessionId String?
+  // Shipping data is snapshotted onto the order at checkout time (like
+  // OrderItem snapshots product name/price) so order history stays accurate
+  // even if the customer later edits or deletes the saved address.
+  tipoEntrega        TipoEntrega    @default(RETIRO_LOCAL)
+  envioNombre        String?
+  envioCi            String?
+  envioCelular       String?
+  envioCiudad        String?
+  envioBarrio        String?
+  // Set when an admin confirms existence (VERIFICANDO_EXISTENCIA -> PENDIENTE)
+  // — verificationCron.ts uses it to send the order back to
+  // VERIFICANDO_EXISTENCIA if it's still unpaid once VerificationSettings'
+  // tolerance window elapses. Cleared on re-confirmation or once the order
+  // actually moves past PENDIENTE.
+  existenciaConfirmadaAt DateTime?
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+
+  items OrderItem[]
+
+  @@index([estado])
+  @@index([createdAt])
+  @@map("orders")
+}
+
+enum VentaModo {
+  UNIDAD
+  PAQUETE
+}
+
+model OrderItem {
+  id        String    @id @default(cuid())
+  orderId   String
+  order     Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String?
+  product   Product?  @relation(fields: [productId], references: [id])
+  nombre    String
+  variante  String    @default("")
+  // Whether `cantidad` counts plain units or whole packs — determines both
+  // which price was charged (precio vs precioPaquete) and how stock is
+  // released back if the order is later cancelled (see lib/stock.ts).
+  tipoVenta VentaModo @default(UNIDAD)
+  cantidad  Int
+  precio    Int
+
+  @@map("order_items")
+}
+
+// ───────────────────────── Coupons ─────────────────────────
+
+enum CouponType {
+  PORCENTAJE
+  MONTO_FIJO
+  ENVIO_GRATIS
+}
+
+enum CouponScope {
+  TODOS
+  PRODUCTOS
+}
+
+model Coupon {
+  id        String        @id @default(cuid())
+  codigo    String        @unique
+  tipo      CouponType
+  valor     Int           @default(0)
+  activo    Boolean       @default(true)
+  usos      Int           @default(0)
+  alcance   CouponScope   @default(TODOS)
+  createdAt DateTime      @default(now())
+
+  productos CouponProduct[]
+
+  @@map("coupons")
+}
+
+model CouponProduct {
+  couponId  String
+  coupon    Coupon  @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@id([couponId, productId])
+  @@map("coupon_products")
+}
+
+// ───────────────────────── Store config (singletons) ─────────────────────────
+
+model BrandingConfig {
+  id      Int    @id @default(1)
+  nombre  String @default("Tienda Online")
+  // Home hero heading renders as "{heroTitulo} {nombre}" — kept as its own
+  // field (rather than baking the whole heading into one string) so
+  // renaming the store still updates the heading automatically instead of
+  // needing the admin to also go edit the hero text.
+  heroTitulo      String @default("Descubrí")
+  heroDescripcion String @default("Ropa, calzado y accesorios pensados para el día a día — con la calidez de siempre.")
+  logoUrl String?
+  // Up to 3 category ids to show as "Categorías destacadas" on the home
+  // page, admin-picked and ordered. Empty means "not explicitly set yet" —
+  // callers fall back to a sensible default (see resolveFeaturedCategoryIds).
+  featuredCategoryIds String[] @default([])
+  // Home page hero background — null keeps the default gradient.
+  heroImageUrl String?
+  // Checkout only offers the methods enabled here — enforced (at least one
+  // must stay true) in the admin PUT /branding validation, never at the DB
+  // level, since a migration can't express "not both false".
+  pagoTarjetaActivo        Boolean @default(true)
+  pagoTransferenciaActivo  Boolean @default(true)
+  // Overrides the storefront's default page background (--color-bg in
+  // globals.css) everywhere in the store, not just the home hero — null
+  // keeps the default cream tone.
+  colorFondo String?
+  // Full visual theme (colors/typography/radius/shadows, applied via
+  // [data-theme] CSS blocks in globals.css) for the whole app — both the
+  // storefront and the admin panel, set on <html> in the root layout.
+  // DEFAULT is the original "Organic" design, unchanged either way.
+  temaId Tema @default(DEFAULT)
+  // A saved custom color variant of temaId (see ThemeVariant) — null means
+  // "the theme's own built-in palette, unmodified". SetNull (not a hard
+  // block) so deleting a variant that's currently in use just falls back to
+  // the plain base theme instead of failing the delete.
+  temaVariantId String?
+  temaVariant   ThemeVariant? @relation(fields: [temaVariantId], references: [id], onDelete: SetNull)
+
+  @@map("branding_config")
+}
+
+enum Tema {
+  DEFAULT
+  MONO_EDITORIAL
+  BOUTIQUE_LUXE
+  STREET_BOLD
+  APPLE_CINEMATIC
+}
+
+// A saved, named re-coloring of one of the 4 built-in temas — only the 6
+// "core" tokens an admin can edit from /admin/config (see colores below) are
+// overridden; the rest of that tema's tokens (9-step ramps, typography,
+// radius, shadows) still come from its [data-theme] CSS block in
+// globals.css. Lets an admin keep e.g. "Boutique Luxe" but swap its gold for
+// silver, save it as "Boutique Luxe — Plata", and switch back and forth
+// without losing either palette.
+model ThemeVariant {
+  id     String @id @default(cuid())
+  tema   Tema
+  nombre String
+  // { bg, surface, text, accent, accent2, onAccent } — hex strings, each
+  // mapped 1:1 to a --color-* custom property and validated server-side
+  // (see coloresSchema in config.routes.ts). Stored as Json rather than 6
+  // separate columns since the set of editable tokens lives alongside this
+  // model and changing it later shouldn't need a migration.
+  colores Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  brandings BrandingConfig[]
+
+  @@index([tema])
+  @@map("theme_variants")
+}
+
+model BankInfo {
+  id             Int    @id @default(1)
+  alias          String @default("")
+  banco          String @default("")
+  tipoCuenta     String @default("")
+  numero         String @default("")
+  identificacion String @default("")
+  titular        String @default("")
+
+  @@map("bank_info")
+}
+
+model AboutContent {
+  id              Int     @id @default(1)
+  historia        String  @default("")
+  anioFundacion   String  @default("")
+  direccion       String  @default("")
+  googleMapsUrl   String  @default("")
+  telefono        String  @default("")
+  emailContacto   String  @default("")
+  fotoPortadaUrl  String?
+  fotoLocalUrl    String?
+
+  @@map("about_content")
+}
+
+// Weekly stock/sales report email — checked every minute by a cron job
+// against diaSemana (0=domingo..6=sábado) + hora ("HH:mm"); ultimoEnvio
+// guards against sending twice within the same matching minute/day.
+model ReportConfig {
+  id                   Int       @id @default(1)
+  activo               Boolean   @default(false)
+  diaSemana            Int       @default(1)
+  hora                 String    @default("08:00")
+  incluirMasVendidos   Boolean   @default(false)
+  incluirMenosVendidos Boolean   @default(false)
+  ultimoEnvio          DateTime?
+
+  @@map("report_config")
+}
+
+// Once an admin confirms a VERIFICANDO_EXISTENCIA order's stock, the
+// customer has toleranciaHoras to actually pay before verificationCron.ts
+// sends it back to VERIFICANDO_EXISTENCIA — otherwise a confirmed-but-
+// abandoned order could sit "ready to pay" indefinitely on stock that may
+// no longer really be there.
+model VerificationSettings {
+  id             Int @id @default(1)
+  toleranciaHoras Int @default(24)
+
+  @@map("verification_settings")
+}
